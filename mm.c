@@ -79,7 +79,7 @@ int mm_init(void)
     if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void*)-1){ // old brk에서 4만큼 늘려서 mem brk로 늘림.
         return -1;
     }
-    PUT(heap_listp,0); // 블록생성시 넣는 padding을 한 워드 크기만큼 생성. heap_listp 위치는 맨 처음.
+    PUT(heap_listp, 0); // 블록생성시 넣는 padding을 한 워드 크기만큼 생성. heap_listp 위치는 맨 처음.
     PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1)); // prologue header 생성. pack을 해석하면, 할당을(1) 할건데 8만큼 줄거다(DSIZE). -> 1 WSIZE 늘어난 시점부터 PACK에서 나온 사이즈를 줄거다.)
     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1)); // prologue footer생성.
     PUT(heap_listp + (3 * WSIZE), PACK(0, 1)); // epilogue block header를 처음에 만든다. 그리고 뒤로 밀리는 형태.
@@ -157,7 +157,7 @@ static void place(void *bp, size_t asize)
     // 들어갈 위치를 포인터로 받는다.(find fit에서 찾는 bp) 크기는 asize로 받음.
     // 요청한 블록을 가용 블록의 시작 부분에 배치, 나머지 부분의 크기가 최소 블록크기와 같거나 큰 경우에만 분할하는 함수.
     size_t csize = GET_SIZE(HDRP(bp)); // 현재 있는 블록의 사이즈.
-    if ( (csize-asize) >= (2*DSIZE)){ // 현재 블록 사이즈안에서 asize를 넣어도 2*DSIZE(헤더와 푸터를 감안한 최소 사이즈)만큼 남냐? 남으면 다른 data를 넣을 수 있으니까.
+    if ( (csize-asize) >= (2 * DSIZE)){ // 현재 블록 사이즈안에서 asize를 넣어도 2*DSIZE(헤더와 푸터를 감안한 최소 사이즈)만큼 남냐? 남으면 다른 data를 넣을 수 있으니까.
         PUT(HDRP(bp), PACK(asize,1)); // 헤더위치에 asize만큼 넣고 1(alloc)로 상태변환. 원래 헤더 사이즈에서 지금 넣으려고 하는 사이즈(asize)로 갱신.(자르는 효과)
         PUT(FTRP(bp), PACK(asize,1)); //푸터 위치도 변경.
         bp = NEXT_BLKP(bp); // regular block만큼 하나 이동해서 bp 위치 갱신.
@@ -215,22 +215,17 @@ void mm_free(void *bp)
 /* mm_realloc - Implemented simply in terms of mm_malloc and mm_free */
 void *mm_realloc(void *bp, size_t size)
 {
-     if(size <= 0){
-        mm_free(bp);
-        return 0;
-    }
-    if(bp == NULL){
-        return mm_malloc(size);
-    }
-    void *newp = mm_malloc(size);
-    if(newp == NULL){
-        return 0;
-    }
-    size_t oldsize = GET_SIZE(HDRP(bp));
-    if(size < oldsize){
-    	oldsize = size;
-	}
-    memcpy(newp, bp, oldsize);
-    mm_free(bp);
-    return newp;
+    void *oldptr = bp;
+    void *newptr;
+    size_t copySize;
+
+    newptr = mm_malloc(size);
+    if (newptr == NULL)
+      return NULL;
+    copySize = GET_SIZE(HDRP(oldptr));
+    if (size < copySize)
+        copySize = size;
+    memcpy(newptr, oldptr, copySize);
+    mm_free(oldptr);
+    return newptr;
 }
