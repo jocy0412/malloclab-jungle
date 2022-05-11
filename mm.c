@@ -83,7 +83,7 @@ int mm_init(void)
     PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1)); // prologue header 생성. pack을 해석하면, 할당을(1) 할건데 8만큼 줄거다(DSIZE). -> 1 WSIZE 늘어난 시점부터 PACK에서 나온 사이즈를 줄거다.)
     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1)); // prologue footer생성.
     PUT(heap_listp + (3 * WSIZE), PACK(0, 1)); // epilogue block header를 처음에 만든다. 그리고 뒤로 밀리는 형태.
-    heap_listp+= (2*WSIZE); // prologue header와 footer 사이로 포인터로 옮긴다. header 뒤 위치. 다른 블록 가거나 그러려고.
+    heap_listp += (2*WSIZE); // prologue header와 footer 사이로 포인터로 옮긴다. header 뒤 위치. 다른 블록 가거나 그러려고.
 
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL) // extend heap을 통해 시작할 때 한번 heap을 늘려줌. 늘리는 양은 상관없음.
         return -1;
@@ -143,7 +143,7 @@ static void *coalesce(void *bp){
 static void *find_fit(size_t asize)
 {
     void *bp;
-    for (bp= heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){ // init에서 쓴 heap_listp를 쓴다. 처음 출발하고 그 다음이 regular block 첫번째 헤더 뒤 위치네.
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){ // init에서 쓴 heap_listp를 쓴다. 처음 출발하고 그 다음이 regular block 첫번째 헤더 뒤 위치네.
         // for문이 계속 돌면 epilogue header까기 간다. epilogue header는 0이니까 종료가 된다.
         if (!GET_ALLOC(HDRP(bp)) && (asize<=GET_SIZE(HDRP(bp)))){ // 이 블록이 가용하고(not 할당) 내가 갖고있는 asize를 담을 수 있으면
             return bp; // 내가 넣을 수 있는 블록만 찾는거니까, 그게 나오면 바로 리턴.
